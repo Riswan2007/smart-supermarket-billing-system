@@ -1,0 +1,9 @@
+opencv-python
+pyzbar
+fastapi
+uvicorn
+sqlalchemy
+python-jose
+passlib[bcrypt]
+requests
+

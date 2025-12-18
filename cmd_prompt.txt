@@ -1,0 +1,9 @@
+it install the all requirement from requirement file
+pip install -r requirements.txt
+
+
+
+libzbar0 is a system (OS) library
+sudo apt update
+sudo apt install libzbar0
+ldconfig -p | grep zbar
