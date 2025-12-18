@@ -1,0 +1,89 @@
+==============================
+GIT BASIC COMMANDS CHEAT SHEET
+==============================
+
+PROJECT FIRST TIME SETUP
+------------------------
+1. Initialize git in project folder
+   git init
+
+2. Add all files to staging
+   git add .
+
+3. Commit files
+   git commit -m "Initial commit"
+
+4. Set main branch
+   git branch -M main
+
+5. Connect to GitHub repo
+   git remote add origin <REPO_URL>
+
+6. Push to GitHub
+   git push -u origin main
+
+
+DAILY WORK (MOST USED)
+---------------------
+1. Check file status
+   git status
+
+2. Add updated files
+   git add .
+
+3. Commit changes
+   git commit -m "Meaningful message"
+
+4. Push changes
+   git push
+
+
+CHECKING & HELP
+---------------
+1. View commit history
+   git log --oneline
+
+2. See remote repo
+   git remote -v
+
+3. See current branch
+   git branch
+
+
+FIX COMMON MISTAKES
+------------------
+1. Forgot to add file
+   git add <filename>
+   git commit -m "Added missing file"
+
+2. Wrong commit message
+   git commit --amend
+
+3. Undo last commit (keep files)
+   git reset --soft HEAD~1
+
+4. Remove file from git (keep local)
+   git rm --cached <filename>
+
+
+BRANCHING (BASIC)
+-----------------
+1. Create new branch
+   git checkout -b feature-name
+
+2. Switch branch
+   git checkout branch-name
+
+3. Merge branch
+   git checkout main
+   git merge feature-name
+
+
+IMPORTANT RULES
+---------------
+- Never commit passwords or API keys
+- Use .gitignore properly
+- One feature = one commit
+- Write clear commit messages
+
+==============================
