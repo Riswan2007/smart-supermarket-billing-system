@@ -1,9 +1,4 @@
-opencv-python
+opencv-python-headless
 pyzbar
-fastapi
-uvicorn
-sqlalchemy
-python-jose
-passlib[bcrypt]
 requests
 
