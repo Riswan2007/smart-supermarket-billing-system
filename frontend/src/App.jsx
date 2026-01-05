@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { db } from "./firebase";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import Navbar from "./components/Navbar";
 import ProductScanner from "./components/ProductScanner";
 import Cart from "./components/Cart";
 import BillSummary from "./components/BillSummary";
 import AddProductModal from "./components/AddProductModal";
+import InventoryManager from "./components/InventoryManager";
 
-function App() {
+function BillingApp() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -16,15 +20,25 @@ function App() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`http://127.0.0.1:8000/product/${barcode}`);
-      if (!response.ok) {
+      const docRef = doc(db, "products", barcode);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const product = docSnap.data();
+        if (product.quantity && product.quantity < 1) {
+          throw new Error("Product out of stock!");
+        }
+        setItems([...items, { ...product, barcode }]);
+      } else {
         throw new Error("Product not found");
       }
-      const product = await response.json();
-      setItems([...items, { ...product, barcode }]);
     } catch (err) {
-      setError(`"${barcode}": ${err.message}`);
-      setTimeout(() => setError(""), 5000);
+      if (err.message.includes("Missing or insufficient permissions")) {
+        setError("Database Locked: Go to Firebase Console -> Firestore Endpoint -> Rules -> Change 'false' to 'true'");
+      } else {
+        setError(`"${barcode}": ${err.message}`);
+      }
+      setTimeout(() => setError(""), 8000);
     } finally {
       setLoading(false);
     }
@@ -36,30 +50,45 @@ function App() {
     setItems(newItems);
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     setProcessing(true);
-    // Simulate API call for billing
-    setTimeout(() => {
-      setProcessing(false);
-      alert("Bill printed successfully!");
+    try {
+      // Deduct quantities from stock (optional enhancement)
+      for (const item of items) {
+        if (item.barcode) {
+          const docRef = doc(db, "products", item.barcode);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const currentQty = docSnap.data().quantity || 0;
+            if (currentQty > 0) {
+              await updateDoc(docRef, { quantity: currentQty - 1 });
+            }
+          }
+        }
+      }
+      alert("Bill printed successfully! Inventory updated.");
       setItems([]);
-    }, 1500);
+    } catch (error) {
+      console.error("Error processing bill:", error);
+      alert("Error processing bill");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleAddProduct = async (productData) => {
-    const response = await fetch("http://127.0.0.1:8000/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(productData),
-    });
+    try {
+      // Use barcode as ID
+      await setDoc(doc(db, "products", productData.barcode), productData);
 
-    if (!response.ok) throw new Error("Failed to add product");
-
-    const newProduct = await response.json();
-    setItems([...items, newProduct]); // Automatically add to cart
-    setIsAddModalOpen(false);
-    setError(""); // Clear any previous errors
-    alert(`Product "${newProduct.name}" added successfully!`);
+      setItems([...items, productData]);
+      setIsAddModalOpen(false);
+      setError("");
+      alert(`Product "${productData.name}" added successfully!`);
+    } catch (err) {
+      console.error("Error adding product:", err);
+      alert("Failed to save product to Firebase.");
+    }
   };
 
   const total = items.reduce((sum, item) => sum + item.price, 0);
@@ -78,12 +107,14 @@ function App() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">Error:</span> {error}
                 </div>
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="text-sm bg-white border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors font-medium text-red-700"
-                >
-                  Add Product
-                </button>
+                {!error.includes("stock") && (
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="text-sm bg-white border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors font-medium text-red-700"
+                  >
+                    Add Product
+                  </button>
+                )}
               </div>
             )}
 
@@ -110,4 +141,13 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<BillingApp />} />
+        <Route path="/inventory" element={<InventoryManager />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}

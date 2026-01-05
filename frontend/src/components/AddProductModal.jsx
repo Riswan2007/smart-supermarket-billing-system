@@ -5,6 +5,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd, initialBarcode
     const [barcode, setBarcode] = useState(initialBarcode);
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
+    const [quantity, setQuantity] = useState("");
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -12,6 +13,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd, initialBarcode
             setBarcode(initialBarcode);
             setName("");
             setPrice("");
+            setQuantity("");
         }
     }, [isOpen, initialBarcode]);
 
@@ -19,7 +21,12 @@ export default function AddProductModal({ isOpen, onClose, onAdd, initialBarcode
         e.preventDefault();
         setLoading(true);
         try {
-            await onAdd({ barcode, name, price: parseFloat(price) });
+            await onAdd({
+                barcode,
+                name,
+                price: parseFloat(price),
+                quantity: parseInt(quantity) || 0
+            });
             onClose();
         } catch (error) {
             console.error("Failed to add product", error);
@@ -81,6 +88,19 @@ export default function AddProductModal({ isOpen, onClose, onAdd, initialBarcode
                             onChange={(e) => setPrice(e.target.value)}
                             className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                             placeholder="0.00"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                        <input
+                            type="number"
+                            required
+                            min="0"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            placeholder="0"
                         />
                     </div>
 
